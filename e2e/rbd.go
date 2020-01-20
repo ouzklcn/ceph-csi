@@ -14,8 +14,10 @@ import (
 var (
 	rbdProvisioner     = "csi-rbdplugin-provisioner.yaml"
 	rbdProvisionerRBAC = "csi-provisioner-rbac.yaml"
+	rbdProvisionerPSP  = "csi-provisioner-psp.yaml"
 	rbdNodePlugin      = "csi-rbdplugin.yaml"
 	rbdNodePluginRBAC  = "csi-nodeplugin-rbac.yaml"
+	rbdNodePluginPSP   = "csi-nodeplugin-psp.yaml"
 	configMap          = "csi-config-map.yaml"
 	rbdDirPath         = "../deploy/rbd/kubernetes"
 	rbdExamplePath     = "../examples/rbd/"
@@ -36,9 +38,11 @@ func deployRBDPlugin() {
 	// deploy provisioner
 	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdProvisioner)
 	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdProvisionerRBAC)
+	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdProvisionerPSP)
 	// deploy nodeplugin
 	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdNodePlugin)
 	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdNodePluginRBAC)
+	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdNodePluginPSP)
 }
 
 func deleteRBDPlugin() {
@@ -50,6 +54,10 @@ func deleteRBDPlugin() {
 	if err != nil {
 		e2elog.Logf("failed to delete provisioner rbac %v", err)
 	}
+	_, err = framework.RunKubectl("delete", "-f", rbdDirPath+rbdProvisionerPSP)
+	if err != nil {
+		e2elog.Logf("failed to delete provisioner psp %v", err)
+	}
 	_, err = framework.RunKubectl("delete", "-f", rbdDirPath+rbdNodePlugin)
 	if err != nil {
 		e2elog.Logf("failed to delete nodeplugin %v", err)
@@ -57,6 +65,10 @@ func deleteRBDPlugin() {
 	_, err = framework.RunKubectl("delete", "-f", rbdDirPath+rbdNodePluginRBAC)
 	if err != nil {
 		e2elog.Logf("failed to delete nodeplugin rbac %v", err)
+	}
+	_, err = framework.RunKubectl("delete", "-f", rbdDirPath+rbdNodePluginPSP)
+	if err != nil {
+		e2elog.Logf("failed to delete nodeplugin psp %v", err)
 	}
 }
 

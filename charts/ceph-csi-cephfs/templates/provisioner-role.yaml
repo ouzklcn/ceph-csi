@@ -22,4 +22,10 @@ rules:
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
 {{- end -}}
+{{- if .Values.provisioner.podSecurityPolicy.enabled }}
+  - apiGroups: ['policy']
+    resources: ['podsecuritypolicies']
+    verbs: ['use']
+    resourceNames: ['{{ include "ceph-csi-cephfs.provisioner.fullname" . }}']
+{{- end -}}
 {{- end -}}

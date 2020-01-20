@@ -114,6 +114,11 @@ nodeplugin:
 
   affinity: {}
 
+  # If true, create & use Pod Security Policy resources
+  # https://kubernetes.io/docs/concepts/policy/pod-security-policy/
+  podSecurityPolicy:
+    enabled: false
+
 provisioner:
   name: provisioner
   # When using Kubernetes <1.14 this value is ignored
@@ -221,6 +226,11 @@ provisioner:
   tolerations: []
 
   affinity: {}
+
+  # If true, create & use Pod Security Policy resources
+  # https://kubernetes.io/docs/concepts/policy/pod-security-policy/
+  podSecurityPolicy:
+    enabled: false
 
 #########################################################
 # Variables for 'internal' use please use with caution! #
