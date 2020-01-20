@@ -71,11 +71,9 @@ is required for provisioning new RBD images.
 
 ## Deployment with Kubernetes
 
-Requires Kubernetes 1.13+
+Requires Kubernetes 1.14+
 
-if your cluster version is 1.13.x please use [rbd v1.13
-templates](../deploy/rbd/kubernetes/v1.13) or else use [rbd v1.14+
-templates](../deploy/rbd/kubernetes/v1.14+)
+Use the [rbd templates](../deploy/rbd/kubernetes)
 
 Your Kubernetes cluster must allow privileged pods (i.e. `--allow-privileged`
 flag must be set to true for both the API server and the kubelet). Moreover, as
@@ -95,6 +93,16 @@ kubectl create -f csi-nodeplugin-rbac.yaml
 Those manifests deploy service accounts, cluster roles and cluster role
 bindings. These are shared for both RBD and CephFS CSI plugins, as they require
 the same permissions.
+
+**Deploy PodSecurityPolicy resources for sidecar containers and node plugins:**
+
+**NOTE:** These manifests are required only if [PodSecurityPolicy](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podsecuritypolicy)
+admission controller is active on your cluster.
+
+```bash
+kubectl create -f csi-provisioner-psp.yaml
+kubectl create -f csi-nodeplugin-psp.yaml
+```
 
 **Deploy ConfigMap for CSI plugins:**
 

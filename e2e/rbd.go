@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"fmt"
-	"time"
 
 	. "github.com/onsi/ginkgo" // nolint
 
@@ -14,20 +13,17 @@ import (
 var (
 	rbdProvisioner     = "csi-rbdplugin-provisioner.yaml"
 	rbdProvisionerRBAC = "csi-provisioner-rbac.yaml"
+	rbdProvisionerPSP  = "csi-provisioner-psp.yaml"
 	rbdNodePlugin      = "csi-rbdplugin.yaml"
 	rbdNodePluginRBAC  = "csi-nodeplugin-rbac.yaml"
+	rbdNodePluginPSP   = "csi-nodeplugin-psp.yaml"
 	configMap          = "csi-config-map.yaml"
-	rbdDirPath         = "../deploy/rbd/kubernetes"
+	rbdDirPath         = "../deploy/rbd/kubernetes/"
 	rbdExamplePath     = "../examples/rbd/"
 	rbdDeploymentName  = "csi-rbdplugin-provisioner"
 	rbdDaemonsetName   = "csi-rbdplugin"
 	namespace          = "default"
 )
-
-func updaterbdDirPath(c clientset.Interface) {
-	version := getKubeVersionToDeploy(c)
-	rbdDirPath = fmt.Sprintf("%s/%s/", rbdDirPath, version)
-}
 
 func deployRBDPlugin() {
 	// delete objects deployed by rook
@@ -36,9 +32,11 @@ func deployRBDPlugin() {
 	// deploy provisioner
 	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdProvisioner)
 	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdProvisionerRBAC)
+	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdProvisionerPSP)
 	// deploy nodeplugin
 	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdNodePlugin)
 	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdNodePluginRBAC)
+	framework.RunKubectlOrDie("create", "-f", rbdDirPath+rbdNodePluginPSP)
 }
 
 func deleteRBDPlugin() {
@@ -50,6 +48,10 @@ func deleteRBDPlugin() {
 	if err != nil {
 		e2elog.Logf("failed to delete provisioner rbac %v", err)
 	}
+	_, err = framework.RunKubectl("delete", "-f", rbdDirPath+rbdProvisionerPSP)
+	if err != nil {
+		e2elog.Logf("failed to delete provisioner psp %v", err)
+	}
 	_, err = framework.RunKubectl("delete", "-f", rbdDirPath+rbdNodePlugin)
 	if err != nil {
 		e2elog.Logf("failed to delete nodeplugin %v", err)
@@ -57,6 +59,10 @@ func deleteRBDPlugin() {
 	_, err = framework.RunKubectl("delete", "-f", rbdDirPath+rbdNodePluginRBAC)
 	if err != nil {
 		e2elog.Logf("failed to delete nodeplugin rbac %v", err)
+	}
+	_, err = framework.RunKubectl("delete", "-f", rbdDirPath+rbdNodePluginPSP)
+	if err != nil {
+		e2elog.Logf("failed to delete nodeplugin psp %v", err)
 	}
 }
 
@@ -66,7 +72,6 @@ var _ = Describe("RBD", func() {
 	// deploy RBD CSI
 	BeforeEach(func() {
 		c = f.ClientSet
-		updaterbdDirPath(f.ClientSet)
 		createConfigMap(rbdDirPath, f.ClientSet, f)
 		deployRBDPlugin()
 		createRBDStorageClass(f.ClientSet, f, make(map[string]string))
@@ -98,15 +103,9 @@ var _ = Describe("RBD", func() {
 			// appClonePath := rbdExamplePath + "pod-restore.yaml"
 			// snapshotPath := rbdExamplePath + "snapshot.yaml"
 
-			By("checking provisioner statefulset/deployment is running")
-			timeout := time.Duration(deployTimeout) * time.Minute
+			By("checking provisioner deployment is running")
 			var err error
-			sts := deployProvAsSTS(f.ClientSet)
-			if sts {
-				err = framework.WaitForStatefulSetReplicasReady(rbdDeploymentName, namespace, f.ClientSet, 1*time.Second, timeout)
-			} else {
-				err = waitForDeploymentComplete(rbdDeploymentName, namespace, f.ClientSet, deployTimeout)
-			}
+			err = waitForDeploymentComplete(rbdDeploymentName, namespace, f.ClientSet, deployTimeout)
 			if err != nil {
 				Fail(err.Error())
 			}

@@ -17,9 +17,13 @@ rules:
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["get", "list", "watch", "create", "delete"]
-{{- if semverCompare ">=1.14" .Capabilities.KubeVersion.GitVersion }}
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
+{{- if .Values.provisioner.podSecurityPolicy.enabled }}
+  - apiGroups: ['policy']
+    resources: ['podsecuritypolicies']
+    verbs: ['use']
+    resourceNames: ['{{ include "ceph-csi-cephfs.provisioner.fullname" . }}']
 {{- end -}}
 {{- end -}}
